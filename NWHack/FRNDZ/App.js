@@ -1,14 +1,52 @@
 import React from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { Platform, StatusBar, StyleSheet, View, AsyncStorage } from 'react-native';
 import { AppLoading, Asset, Font, Icon } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
 import LoginScreen from './screens/LoginScreen';
+import * as authKeys from './constants/firebase';
+import firebase from 'firebase';
+
+
 
 export default class App extends React.Component {
   state = {
     isLoadingComplete: false,
+    loggedIn:null
   };
 
+  componentWillMount(){
+    firebase.initializeApp({
+      apiKey: authKeys.API_KEY,
+      authDomain: authKeys.AUTH_DOMAIN,
+      databaseURL: authKeys.DATABASE_URL,
+      projectId: authKeys.PROJECT_ID,
+      storageBucket: authKeys.STORAGE_BUCKET,
+      messagingSenderId: authKeys.MESSAGING_SENDER_ID
+    });
+    firebase.auth().onAuthStateChanged((user) => {
+      if(user) {
+        this.setState({loggedIn:true});
+      }
+      else {
+        this.setState({loggedIn:false});
+      }
+    });
+    this._signInAsync();
+  }
+  _signInAsync = async () => {
+      this.setState({
+        loggedIn: 'true',
+      },
+    );
+    let user = {
+      LoggedIn: this.state.loggedIn,
+      user_name:  '',
+      password:  '',
+      remember: ''
+    }
+
+    await AsyncStorage.setItem('User', JSON.stringify(user));
+ };
   render() {
     if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen) {
       return (

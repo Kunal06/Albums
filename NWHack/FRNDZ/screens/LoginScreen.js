@@ -2,42 +2,70 @@ import React, { Component } from 'react';
 import {SafeAreaView,View, Text,AsyncStorage,TouchableOpacity, Image, Switch, KeyboardAvoidingView} from 'react-native';
 import {Button,Card, CardSection,InputVertical, Spinner,Header} from '../components/common';
 // import * as constants from '../constants/Constants';
+import firebase from 'firebase' ;
 
 
 export default class LoginScreen extends Component {
-
+  static navigationOptions = {
+    Header: null,
+  };
   state = { email: '', password: '', error: '', loading: false,
   loggedIn: 'false', secure: true, remember: false};
   constructor(props){
     super(props);
   }
+  onButtonPress(){
+  const { email,password } = this.state;
 
- //   _signInAsync = async () => {
- //    this.setState({
- //      loggedIn: 'true',
- //    },
- //  );
- //  let user = {
- //    LoggedIn: this.state.loggedIn,
- //    user_name:  this.state.email,
- //    password:  this.state.password,
- //    remember: this.state.remember
- //  }
- //
- //    await AsyncStorage.setItem('User', JSON.stringify(user));
- //
- //     this.props.navigation.navigate('AuthLoading');
- // };
- login(){
+  this.setState({error: '', loading: true});
+
+  firebase.auth().signInWithEmailAndPassword(email,password)
+    .then(this.onLoginSuccess.bind(this))
+    .catch(() => {
+      firebase.auth().createUserWithEmailAndPassword(email,password)
+        .then(this.onLoginSuccess.bind(this))
+        .catch(this.onLoginFail.bind(this));
+  });
+}
+_signInAsync = async () => {
+  this.setState({
+    loggedIn: 'true',
+  },
+);
+let user = {
+  LoggedIn: this.state.loggedIn,
+  user_name:  this.state.email,
+  password:  this.state.password,
+  remember: this.state.remember
+}
+
+  await AsyncStorage.setItem('User', JSON.stringify(user));
+
    this.props.navigation.navigate('AuthLoading');
- }
+ };
+onLoginFail(){
+  this.setState({
+    error: 'Authentication Failed',
+    loading: false
+  });
+}
+onLoginSuccess(){
+  this._signInAsync();
+  this.setState({email:'',
+  password:'',
+  error: '',
+  loading: false
+});
+this.props.navigation.navigate('AuthLoading');
+console.log("LOGIN SUCCESS");
+}
   renderButton(){
   if(this.state.loading){
     return <Spinner size= "small" /> ;
   }
   return (
     <View style= {styles.loginButton}>
-    <Button style={styles.buttonStyle} Pressed = {() => this.props.navigation.navigate('AuthLoading')}>
+    <Button style={styles.buttonStyle} Pressed = {this.onButtonPress.bind(this)}>
         Log in
       </Button>
       </View>
